@@ -8,6 +8,7 @@
 // 4. Compare your solution with solution.c
 
 #include <stdbool.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -50,7 +51,7 @@ int create_user_account(bool isAdmin, const char *username) {
     }    
 
     user_account *ua;
-    if (strlen(username) > MAX_USERNAME_LEN) {
+    if (username == NULL || strlen(username) > MAX_USERNAME_LEN) {
         fprintf(stderr, "the username is too long");
         return INVALID_USER_ID;
     }    
@@ -60,7 +61,7 @@ int create_user_account(bool isAdmin, const char *username) {
         return INVALID_USER_ID;
     }
     ua->isAdmin = isAdmin;
-    ua->userid = userid_next++;
+    ua->userid = userid_next;
     strcpy(ua->username, username);
     memset(&ua->setting, 0, sizeof ua->setting);
     accounts[userid_next] = ua;
@@ -70,17 +71,19 @@ int create_user_account(bool isAdmin, const char *username) {
 // Updates the matching setting for the specified user and returns the status of the operation
 // A setting is some arbitrary string associated with an index as a key
 bool update_setting(int user_id, const char *index, const char *value) {
-    if (user_id < 0 || user_id >= MAX_USERS)
+    if (user_id < 0 || user_id >= MAX_USERS || accounts[user_id] == NULL)
         return false;
 
+    if (index == NULL || value == NULL)
+        return false;
     char *endptr;
-    long i, v;
-    i = strtol(index, &endptr, 10);
-    if (*endptr)
+    errno = 0;
+    long i = strtol(index, &endptr, 10);
+    if (errno == ERANGE || endptr == index || *endptr || i < 0 || i >= SETTINGS_COUNT)
         return false;
-
-    v = strtol(value, &endptr, 10);
-    if (*endptr || i >= SETTINGS_COUNT)
+    errno = 0;
+    long v = strtol(value, &endptr, 10);
+    if (errno == ERANGE || endptr == value || *endptr)
         return false;
     accounts[user_id]->setting[i] = v;
     return true;
@@ -88,7 +91,7 @@ bool update_setting(int user_id, const char *index, const char *value) {
 
 // Returns whether the specified user is an admin
 bool is_admin(int user_id) {
-    if (user_id < 0 || user_id >= MAX_USERS) {
+    if (user_id < 0 || user_id >= MAX_USERS || accounts[user_id] == NULL) {
         fprintf(stderr, "invalid user id");
         return false;
     }    
@@ -98,7 +101,7 @@ bool is_admin(int user_id) {
 // Returns the username of the specified user
 const char* username(int user_id) {
     // Returns an error for invalid user ids
-    if (user_id < 0 || user_id >= MAX_USERS) {
+    if (user_id < 0 || user_id >= MAX_USERS || accounts[user_id] == NULL) {
         fprintf(stderr, "invalid user id");
         return NULL;
     }    

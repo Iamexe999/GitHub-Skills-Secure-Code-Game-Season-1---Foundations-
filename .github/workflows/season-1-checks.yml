@@ -1,0 +1,30 @@
+name: Season 1 completed challenges
+on:
+  push:
+    branches: [main]
+    paths: ['Season-1/**', '.github/workflows/season-1-checks.yml']
+  pull_request:
+    paths: ['Season-1/**', '.github/workflows/season-1-checks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  foundations:
+    name: All five Foundations levels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Python dependencies
+        run: python3 -m pip install flask bcrypt
+      - name: Verify functional and security tests
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 Season-1/verify.py | tee "$RUNNER_TEMP/season-1-results.txt"
+      - name: Publish completion evidence
+        if: always()
+        shell: bash
+        run: |
+          printf '# Season 1 verification\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/season-1-results.txt" >> "$GITHUB_STEP_SUMMARY"
+          printf '\n```\n' >> "$GITHUB_STEP_SUMMARY"

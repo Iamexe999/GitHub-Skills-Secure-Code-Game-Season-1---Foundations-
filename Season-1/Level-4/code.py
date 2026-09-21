@@ -11,6 +11,8 @@ the tests.py again to recreate it.
 
 import sqlite3
 import os
+import re
+import math
 from flask import Flask, request
 
 ### Unrelated to the exercise -- Starts here -- Please ignore
@@ -73,177 +75,91 @@ class Create(object):
         finally:
             db_con.close()
 
-class DB_CRUD_ops(object):
+class DB_CRUD_ops:
+    def _connect(self):
+        Create()
+        return sqlite3.connect(os.path.join(os.path.dirname(__file__), 'level-4.db'))
 
-    # retrieves all info about a stock symbol from the stocks table
-    # Example: get_stock_info('MSFT') will result into executing
-    # SELECT * FROM stocks WHERE symbol = 'MSFT'
     def get_stock_info(self, stock_symbol):
-        # building database from scratch as it is more suitable for the purpose of the lab
-        db = Create()
-        con = Connect()
+        # Display text preserves the exercise UI; it is NEVER executed as SQL.
+        display = "SELECT * FROM stocks WHERE symbol = '{0}'".format(stock_symbol)
+        res = "[METHOD EXECUTED] get_stock_info\n[QUERY] " + display + "\n"
+        if any(char in stock_symbol for char in ";%&^!#-'"):
+            return res + "CONFIRM THAT THE ABOVE QUERY IS NOT MALICIOUS TO EXECUTE"
+        con = self._connect()
         try:
-            path = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(path, 'level-4.db')
-            db_con = con.create_connection(db_path)
-            cur = db_con.cursor()
-
-            res = "[METHOD EXECUTED] get_stock_info\n"
-            query = "SELECT * FROM stocks WHERE symbol = '{0}'".format(stock_symbol)
-            res += "[QUERY] " + query + "\n"
-
-            # a block list (aka restricted characters) that should not exist in user-supplied input
-            restricted_chars = ";%&^!#-"
-            # checks if input contains characters from the block list
-            has_restricted_char = any([char in query for char in restricted_chars])
-            # checks if input contains a wrong number of single quotes against SQL injection
-            correct_number_of_single_quotes = query.count("'") == 2
-
-            # performs the checks for good cyber security and safe software against SQL injection
-            if has_restricted_char or not correct_number_of_single_quotes:
-                # in case you want to sanitize user input, please uncomment the following 2 lines
-                # sanitized_query = query.translate({ord(char):None for char in restricted_chars})
-                # res += "[SANITIZED_QUERY]" + sanitized_query + "\n"
-                res += "CONFIRM THAT THE ABOVE QUERY IS NOT MALICIOUS TO EXECUTE"
-            else:
-                cur.execute(query)
-
-                query_outcome = cur.fetchall()
-                for result in query_outcome:
-                    res += "[RESULT] " + str(result)
+            for row in con.execute("SELECT * FROM stocks WHERE symbol = ?", (stock_symbol,)):
+                res += "[RESULT] " + str(row)
             return res
-
-        except sqlite3.Error as e:
-            print(f"ERROR: {e}")
-
         finally:
-            db_con.close()
+            con.close()
 
-    # retrieves the price of a stock symbol from the stocks table
-    # Example: get_stock_price('MSFT') will result into executing
-    # SELECT price FROM stocks WHERE symbol = 'MSFT'
     def get_stock_price(self, stock_symbol):
-        # building database from scratch as it is more suitable for the purpose of the lab
-        db = Create()
-        con = Connect()
+        display = "SELECT price FROM stocks WHERE symbol = '" + stock_symbol + "'"
+        res = "[METHOD EXECUTED] get_stock_price\n[QUERY] " + display + "\n"
+        con = self._connect()
         try:
-            path = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(path, 'level-4.db')
-            db_con = con.create_connection(db_path)
-            cur = db_con.cursor()
-
-            res = "[METHOD EXECUTED] get_stock_price\n"
-            query = "SELECT price FROM stocks WHERE symbol = '" + stock_symbol + "'"
-            res += "[QUERY] " + query + "\n"
-            if ';' in query:
-                res += "[SCRIPT EXECUTION]\n"
-                cur.executescript(query)
-            else:
-                cur.execute(query)
-                query_outcome = cur.fetchall()
-                for result in query_outcome:
-                    res += "[RESULT] " + str(result) + "\n"
+            for row in con.execute("SELECT price FROM stocks WHERE symbol = ?", (stock_symbol,)):
+                res += "[RESULT] " + str(row) + "\n"
             return res
-
-        except sqlite3.Error as e:
-            print(f"ERROR: {e}")
-
         finally:
-            db_con.close()
+            con.close()
 
-    # updates stock price
     def update_stock_price(self, stock_symbol, price):
-        # building database from scratch as it is more suitable for the purpose of the lab
-        db = Create()
-        con = Connect()
+        if not isinstance(price, float) or not math.isfinite(price) or price < 0:
+            raise ValueError("ERROR: stock price must be a finite nonnegative float")
+        display = "UPDATE stocks SET price = '%d' WHERE symbol = '%s'" % (price, stock_symbol)
+        con = self._connect()
         try:
-            path = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(path, 'level-4.db')
-            db_con = con.create_connection(db_path)
-            cur = db_con.cursor()
-
-            if not isinstance(price, float):
-                raise Exception("ERROR: stock price provided is not a float")
-
-            res = "[METHOD EXECUTED] update_stock_price\n"
-            # UPDATE stocks SET price = 310.0 WHERE symbol = 'MSFT'
-            query = "UPDATE stocks SET price = '%d' WHERE symbol = '%s'" % (price, stock_symbol)
-            res += "[QUERY] " + query + "\n"
-
-            cur.execute(query)
-            db_con.commit()
-            query_outcome = cur.fetchall()
-            for result in query_outcome:
-                res += "[RESULT] " + result
-            return res
-
-        except sqlite3.Error as e:
-            print(f"ERROR: {e}")
-
+            con.execute("UPDATE stocks SET price = ? WHERE symbol = ?", (price, stock_symbol))
+            con.commit()
+            return "[METHOD EXECUTED] update_stock_price\n[QUERY] " + display + "\n"
         finally:
-            db_con.close()
+            con.close()
 
-    # executes multiple queries
-    # Example: SELECT price FROM stocks WHERE symbol = 'MSFT';
-    #          SELECT * FROM stocks WHERE symbol = 'MSFT'
-    # Example: UPDATE stocks SET price = 310.0 WHERE symbol = 'MSFT'
+    @staticmethod
+    def _read_requests(query):
+        # Compatibility with the two original read-only examples, not arbitrary SQL.
+        # Parse the ENTIRE request before executing any fixed statement.
+        requests = []
+        for part in query.split(';'):
+            if not part.strip():
+                continue
+            match = re.fullmatch(
+                r"SELECT (price|\*) FROM stocks WHERE symbol = '([A-Za-z0-9.]+)'",
+                part.strip(), re.IGNORECASE)
+            if match is None:
+                raise ValueError("Only stock-price and stock-info lookups are supported")
+            requests.append((part, match[1].lower(), match[2]))
+        return requests
+
+    @staticmethod
+    def _read_rows(con, column, symbol):
+        if column == 'price':
+            return con.execute("SELECT price FROM stocks WHERE symbol = ?", (symbol,)).fetchall()
+        return con.execute("SELECT * FROM stocks WHERE symbol = ?", (symbol,)).fetchall()
+
     def exec_multi_query(self, query):
-        # building database from scratch as it is more suitable for the purpose of the lab
-        db = Create()
-        con = Connect()
+        requests = self._read_requests(query)
+        con = self._connect()
         try:
-            path = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(path, 'level-4.db')
-            db_con = con.create_connection(db_path)
-            cur = db_con.cursor()
-
             res = "[METHOD EXECUTED] exec_multi_query\n"
-            for query in filter(None, query.split(';')):
-                res += "[QUERY]" + query + "\n"
-                query = query.strip()
-                cur.execute(query)
-                db_con.commit()
-
-                query_outcome = cur.fetchall()
-                for result in query_outcome:
-                    res += "[RESULT] " + str(result) + " "
+            for original, column, symbol in requests:
+                res += "[QUERY]" + original + "\n"
+                for row in self._read_rows(con, column, symbol):
+                    res += "[RESULT] " + str(row) + " "
             return res
-
-        except sqlite3.Error as e:
-            print(f"ERROR: {e}")
-
         finally:
-            db_con.close()
+            con.close()
 
-    # executes any query or multiple queries as defined from the user in the form of script
-    # Example: SELECT price FROM stocks WHERE symbol = 'MSFT';
-    #          SELECT * FROM stocks WHERE symbol = 'MSFT'
     def exec_user_script(self, query):
-        # building database from scratch as it is more suitable for the purpose of the lab
-        db = Create()
-        con = Connect()
+        requests = self._read_requests(query)
+        con = self._connect()
         try:
-            path = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(path, 'level-4.db')
-            db_con = con.create_connection(db_path)
-            cur = db_con.cursor()
-
-            res = "[METHOD EXECUTED] exec_user_script\n"
-            res += "[QUERY] " + query + "\n"
-            if ';' in query:
-                res += "[SCRIPT EXECUTION]"
-                cur.executescript(query)
-                db_con.commit()
-            else:
-                cur.execute(query)
-                db_con.commit()
-                query_outcome = cur.fetchall()
-                for result in query_outcome:
-                    res += "[RESULT] " + str(result)
+            res = "[METHOD EXECUTED] exec_user_script\n[QUERY] " + query + "\n"
+            for _, column, symbol in requests:
+                for row in self._read_rows(con, column, symbol):
+                    res += "[RESULT] " + str(row)
             return res
-
-        except sqlite3.Error as e:
-            print(f"ERROR: {e}")
-
         finally:
-            db_con.close()
+            con.close()
