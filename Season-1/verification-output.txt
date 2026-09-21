@@ -21,8 +21,8 @@ OK
 LEVEL 1: PASS
 
 === LEVEL 2 ===
-$ gcc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all /tmp/secure-code-game-68iohe2u/Season-1/Level-2/tests.c -o /tmp/secure-code-game-68iohe2u/tests
-$ /tmp/secure-code-game-68iohe2u/tests
+$ gcc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all /tmp/secure-code-game-q0ca4mae/Season-1/Level-2/tests.c -o /tmp/secure-code-game-q0ca4mae/tests
+$ /tmp/secure-code-game-q0ca4mae/tests
 Level 2 
 
 0. Non-admin (admin:0) username called 'pwned' has been created 
@@ -34,8 +34,8 @@ Level 2
 4. Making sure user 'pwned' is not an admin by performing a check -> [Result] Admin:0 
 
 User is not an admin so the code works as expected... is it though? 
-$ gcc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all /tmp/secure-code-game-68iohe2u/Season-1/Level-2/hack.c -o /tmp/secure-code-game-68iohe2u/hack
-$ /tmp/secure-code-game-68iohe2u/hack
+$ gcc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all /tmp/secure-code-game-q0ca4mae/Season-1/Level-2/hack.c -o /tmp/secure-code-game-q0ca4mae/hack
+$ /tmp/secure-code-game-q0ca4mae/hack
 Level 2 
 
 0. Non-admin (admin:0) username called 'pwned' has been created 
@@ -43,8 +43,8 @@ Level 2
 2. Making sure user 'pwned' is not an admin by performing a check -> [Result] Admin:0 
 
 CONGRATULATIONS LEVEL 2 PASSED!
-$ gcc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all /tmp/secure-code-game-68iohe2u/Season-1/Level-2/regression.c -o /tmp/secure-code-game-68iohe2u/regression
-$ /tmp/secure-code-game-68iohe2u/regression
+$ gcc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all /tmp/secure-code-game-q0ca4mae/Season-1/Level-2/regression.c -o /tmp/secure-code-game-q0ca4mae/regression
+$ /tmp/secure-code-game-q0ca4mae/regression
 invalid user idinvalid user idthe maximum number of users have been exceededC bounds, parsing, account capacity, and privilege regressions: PASS
 LEVEL 2: PASS
 
@@ -58,7 +58,7 @@ OK
 $ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python hack.py
 ..
 ----------------------------------------------------------------------
-Ran 2 tests in 0.000s
+Ran 2 tests in 0.001s
 
 OK
 $ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python regression.py
@@ -94,13 +94,13 @@ LEVEL 4: PASS
 $ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python tests.py
 ..
 ----------------------------------------------------------------------
-Ran 2 tests in 1.508s
+Ran 2 tests in 1.490s
 
 OK
 $ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python regression.py
-...
+....
 ----------------------------------------------------------------------
-Ran 3 tests in 2.234s
+Ran 4 tests in 2.666s
 
 OK
 LEVEL 5: PASS

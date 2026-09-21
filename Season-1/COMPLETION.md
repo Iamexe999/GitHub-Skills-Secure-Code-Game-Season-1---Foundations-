@@ -18,7 +18,7 @@ C programs also run with UndefinedBehaviorSanitizer.
 | 2: Matrix | Lower and upper array bounds, complete integer parsing, account validation and ID allocation | Original tests and exploit + assertion-based capacity/bounds regression |
 | 3: Social Network | Canonical paths constrained to the document root, including symlink resolution | 2 functionality + 2 exploit + 2 regression tests |
 | 4: Data Bank | Parameter binding; arbitrary scripts replaced with a narrow read-only request parser | 6 functionality + 1 corrected exploit + 3 regression tests |
-| 5: Locanda | secrets.choice, bcrypt salts, environment secret, salted password hashing | 2 functionality + 3 regression tests |
+| 5: Locanda | secrets.choice, bcrypt salts, environment secret, salted password hashing | 2 functionality + 4 regression tests |
 
 ## Test correction and compatibility notes
 
@@ -29,7 +29,9 @@ execution marker, and an unchanged MSFT price. Additional regressions cover tabl
 removal, boolean injection, unauthorized scripts, and fractional prices.
 
 The Level 5 `MD5_hasher` name remains for the original API test, but its implementation
-uses salted bcrypt over a SHA-256 prehash. It does not create or accept MD5 digests.
+uses salted bcrypt directly. It does not create or accept MD5 digests.
+The legacy SHA256_hasher name is also an alias for Bcrypt_hasher. Passwords over
+72 UTF-8 bytes are rejected explicitly rather than silently truncated.
 Existing MD5 passwords would require a reset. The training SECRET_KEY was removed
 from active code; a real exposed key would also require rotation.
 

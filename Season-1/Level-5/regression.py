@@ -12,9 +12,17 @@ class Regression(unittest.TestCase):
         rd, hasher = c.Random_generator(), c.SHA256_hasher()
         salts = [rd.generate_salt() for _ in range(2)]
         self.assertNotEqual(*salts)
-        hashed = hasher.password_hash('correct password' * 10, salts[0])
-        self.assertTrue(hasher.password_verification('correct password' * 10, hashed))
+        hashed = hasher.password_hash('correct password phrase', salts[0])
+        self.assertTrue(hasher.password_verification('correct password phrase', hashed))
         self.assertFalse(hasher.password_verification('wrong', hashed))
+
+    def test_long_password_never_truncated(self):
+        hasher = c.Bcrypt_hasher()
+        salt = c.Random_generator().generate_salt()
+        with self.assertRaises(ValueError):
+            hasher.password_hash('x' * 73, salt)
+        hashed = hasher.password_hash('x' * 72, salt)
+        self.assertFalse(hasher.password_verification('x' * 73, hashed))
 
     def test_legacy_api_is_also_salted_bcrypt(self):
         hasher = c.MD5_hasher()
@@ -22,6 +30,6 @@ class Regression(unittest.TestCase):
         self.assertNotEqual(a, b)
         self.assertTrue(a.startswith('$2b$'))
         self.assertFalse(hasher.password_verification('wrong', a))
-        self.assertEqual(c.PASSWORD_HASHER, 'SHA256_hasher')
+        self.assertEqual(c.PASSWORD_HASHER, 'Bcrypt_hasher')
 
 if __name__ == '__main__': unittest.main()

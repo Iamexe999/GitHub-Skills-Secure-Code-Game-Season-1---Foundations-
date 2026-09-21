@@ -2,9 +2,7 @@
 
 # This is the last level of our first season, good luck!
 
-import binascii
 import secrets
-import hashlib
 import os
 import bcrypt
 
@@ -22,19 +20,27 @@ class Random_generator:
     def generate_salt(self, rounds=12):
         return bcrypt.gensalt(rounds=rounds)
 
-class SHA256_hasher:
+class Bcrypt_hasher:
+    @staticmethod
+    def _password_bytes(password):
+        encoded = password.encode('utf-8')
+        # bcrypt has a 72-byte limit. Fail explicitly; never silently truncate.
+        if not encoded or len(encoded) > 72:
+            raise ValueError("Password must contain between 1 and 72 UTF-8 bytes")
+        return encoded
 
-    # produces the password hash by combining password + salt because hashing
     def password_hash(self, password, salt):
-        password = binascii.hexlify(hashlib.sha256(password.encode()).digest())
-        password_hash = bcrypt.hashpw(password, salt)
-        return password_hash.decode('ascii')
+        return bcrypt.hashpw(self._password_bytes(password), salt).decode('ascii')
 
-    # verifies that the hashed password reverses to the plain text version on verification
     def password_verification(self, password, password_hash):
-        password = binascii.hexlify(hashlib.sha256(password.encode()).digest())
-        password_hash = password_hash.encode('ascii')
-        return bcrypt.checkpw(password, password_hash)
+        try:
+            return bcrypt.checkpw(self._password_bytes(password), password_hash.encode('ascii'))
+        except (ValueError, UnicodeError):
+            return False
+
+
+# Legacy name retained for the supplied tests; the algorithm is bcrypt.
+SHA256_hasher = Bcrypt_hasher
 
 class MD5_hasher(SHA256_hasher):
     """Legacy API name only: new hashes use salted bcrypt, never MD5.
@@ -48,7 +54,7 @@ class MD5_hasher(SHA256_hasher):
 PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
 PUBLIC_KEY = os.environ.get('PUBLIC_KEY')
 SECRET_KEY = os.environ.get('SECRET_KEY')
-PASSWORD_HASHER = 'SHA256_hasher'
+PASSWORD_HASHER = 'Bcrypt_hasher'
 
 
 # Contribute new levels to the game in 3 simple steps!
