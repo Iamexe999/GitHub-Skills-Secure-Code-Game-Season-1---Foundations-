@@ -41,7 +41,11 @@ filesystem changes by a local attacker.
 
 ## Evidence
 
-See the **Season 1 completed challenges** Actions run for independently rerun output.
-`verification-output.txt` records the local run. CodeQL status is recorded after the
-repository analysis finishes; intentionally vulnerable examples in other seasons and
-reference solution files are outside this assignment.
+- [All five levels passed in GitHub Actions](https://github.com/Iamexe999/GitHub-Skills-Secure-Code-Game-Season-1---Foundations-/actions/runs/35631916964) on source commit `9b0c0e3`.
+- [CodeQL analysis](https://github.com/Iamexe999/GitHub-Skills-Secure-Code-Game-Season-1---Foundations-/actions/runs/35631917004): no open alerts in Season 1 challenge `code.py` implementations after analysis.
+- The eight remaining repository alerts are six in Season 2 and two in the unmodified Level 5 reference `solution.py`. No alerts were dismissed or scan paths excluded.
+- `verification-output.txt` records the local run; 33 Python tests and three C programs pass.
+- Codespace `miniature space dollop` was created and opened. Its editor stayed in Restricted Mode; verification ran locally and in GitHub Actions, not inside the Codespace.
+
+The SQL exploit assertion correction and bcrypt compatibility details above are part
+of the completion record, rather than hidden changes to the original tests.
